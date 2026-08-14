@@ -1,0 +1,3 @@
+agent:
+  id: simple
+  permissions: [read, write, list]
