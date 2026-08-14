@@ -1,8 +1,12 @@
 #pragma once
 #include "request_handler.hpp"
 #include <atomic>
+#include <condition_variable>
+#include <deque>
+#include <mutex>
 #include <string>
 #include <thread>
+#include <vector>
 
 namespace ai_cloud::api {
 
@@ -16,6 +20,7 @@ class HttpServer {
 
  private:
   void serve_loop();
+  void worker_loop();
   void handle_connection(int client_fd) const;
 
   RequestHandler handler_;
@@ -23,6 +28,10 @@ class HttpServer {
   int port_;
   int server_fd_{-1};
   std::thread server_thread_{};
+  std::vector<std::thread> workers_{};
+  std::deque<int> pending_clients_{};
+  mutable std::mutex clients_mu_{};
+  std::condition_variable clients_cv_{};
   std::atomic<bool> running_{false};
 };
 

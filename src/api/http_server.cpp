@@ -1,10 +1,13 @@
 #include "http_server.hpp"
 #include <arpa/inet.h>
+#include <algorithm>
 #include <cerrno>
+#include <cctype>
 #include <cstring>
 #include <netinet/in.h>
 #include <sstream>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <unistd.h>
 
 namespace ai_cloud::api {
@@ -23,6 +26,14 @@ std::string status_text(int status) {
   }
 }
 
+std::string trim(std::string value) {
+  value.erase(value.begin(),
+              std::find_if(value.begin(), value.end(), [](unsigned char ch) { return !std::isspace(ch); }));
+  value.erase(std::find_if(value.rbegin(), value.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(),
+              value.end());
+  return value;
+}
+
 Request parse_request(const std::string& raw) {
   Request req;
   std::istringstream stream(raw);
@@ -39,7 +50,7 @@ Request parse_request(const std::string& raw) {
     if (!line.empty() && line.back() == '\r') line.pop_back();
     const auto colon = line.find(':');
     if (colon == std::string::npos) continue;
-    req.headers[line.substr(0, colon)] = line.substr(colon + 1);
+    req.headers[trim(line.substr(0, colon))] = trim(line.substr(colon + 1));
   }
   return req;
 }
@@ -102,6 +113,11 @@ bool HttpServer::start(std::string* error) {
   }
 
   running_ = true;
+  const auto worker_count = std::max(2u, std::thread::hardware_concurrency());
+  workers_.reserve(worker_count);
+  for (unsigned i = 0; i < worker_count; ++i) {
+    workers_.emplace_back(&HttpServer::worker_loop, this);
+  }
   server_thread_ = std::thread(&HttpServer::serve_loop, this);
   return true;
 }
@@ -114,14 +130,35 @@ void HttpServer::serve_loop() {
       if (errno == EINTR) continue;
       continue;
     }
-    std::thread([this, client_fd] {
-      handle_connection(client_fd);
-      ::close(client_fd);
-    }).detach();
+    {
+      std::lock_guard<std::mutex> lock(clients_mu_);
+      pending_clients_.push_back(client_fd);
+    }
+    clients_cv_.notify_one();
+  }
+}
+
+void HttpServer::worker_loop() {
+  while (true) {
+    int client_fd = -1;
+    {
+      std::unique_lock<std::mutex> lock(clients_mu_);
+      clients_cv_.wait(lock, [this] { return !running_ || !pending_clients_.empty(); });
+      if (!running_ && pending_clients_.empty()) return;
+      client_fd = pending_clients_.front();
+      pending_clients_.pop_front();
+    }
+    handle_connection(client_fd);
+    ::close(client_fd);
   }
 }
 
 void HttpServer::handle_connection(int client_fd) const {
+  timeval timeout{};
+  timeout.tv_sec = 5;
+  timeout.tv_usec = 0;
+  (void)::setsockopt(client_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+
   std::string request_data;
   char buffer[4096];
   while (request_data.find("\r\n\r\n") == std::string::npos) {
@@ -140,12 +177,22 @@ void HttpServer::handle_connection(int client_fd) const {
 void HttpServer::stop() {
   if (!running_) return;
   running_ = false;
+  clients_cv_.notify_all();
   if (server_fd_ >= 0) {
     ::shutdown(server_fd_, SHUT_RDWR);
     ::close(server_fd_);
     server_fd_ = -1;
   }
   if (server_thread_.joinable()) server_thread_.join();
+  for (auto& worker : workers_) {
+    if (worker.joinable()) worker.join();
+  }
+  workers_.clear();
+  std::lock_guard<std::mutex> lock(clients_mu_);
+  while (!pending_clients_.empty()) {
+    ::close(pending_clients_.front());
+    pending_clients_.pop_front();
+  }
 }
 
 } // namespace ai_cloud::api

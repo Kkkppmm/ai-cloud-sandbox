@@ -59,6 +59,10 @@ bool apply_strict(std::string* error) {
 }
 
 bool apply_filter(std::string* error) {
+#if !defined(__x86_64__)
+  if (error) *error = "seccomp filter mode is currently supported only on x86_64";
+  return false;
+#else
   static sock_filter filter[] = {
       BPF_STMT(BPF_LD | BPF_W | BPF_ABS, static_cast<unsigned int>(offsetof(seccomp_data, arch))),
       BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, AUDIT_ARCH_X86_64, 0, 7),
@@ -81,6 +85,7 @@ bool apply_filter(std::string* error) {
     return false;
   }
   return true;
+#endif
 }
 
 } // namespace

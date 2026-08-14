@@ -40,35 +40,35 @@ DaemonConfig load_config(const std::string& path) {
     if (pos == std::string::npos) continue;
     std::string key = trim(line.substr(0, pos));
     std::string value = unquote(trim(line.substr(pos + 1)));
-    if (key.find("port") != std::string::npos) {
+    if (key == "port") {
       try {
         cfg.api.port = std::stoi(value);
       } catch (...) {
       }
     }
-    if (key.find("memory_limit_mb") != std::string::npos) {
+    if (key == "memory_limit_mb") {
       try {
         cfg.resources.memory_limit_mb = static_cast<std::size_t>(std::stoull(value));
       } catch (...) {
       }
     }
-    if (key.find("cpu_shares") != std::string::npos) {
+    if (key == "cpu_shares") {
       try {
         cfg.resources.cpu_shares = std::stoi(value);
       } catch (...) {
       }
     }
-    if (key.find("workspace_quota_mb") != std::string::npos) {
+    if (key == "workspace_quota_mb") {
       try {
         cfg.resources.workspace_quota_mb = static_cast<std::size_t>(std::stoull(value));
       } catch (...) {
       }
     }
-    if (key.find("enable_network") != std::string::npos) cfg.security.enable_network = parse_bool(value, cfg.security.enable_network);
-    if (key.find("enable_seccomp") != std::string::npos) cfg.security.enable_seccomp = parse_bool(value, cfg.security.enable_seccomp);
-    if (key.find("seccomp_policy_path") != std::string::npos) cfg.security.seccomp_policy_path = value;
-    if (key.find("cgroup_policy_path") != std::string::npos) cfg.security.cgroup_policy_path = value;
-    if (key.find("bind_address") != std::string::npos) cfg.api.bind_address = value;
+    if (key == "enable_network") cfg.security.enable_network = parse_bool(value, cfg.security.enable_network);
+    if (key == "enable_seccomp") cfg.security.enable_seccomp = parse_bool(value, cfg.security.enable_seccomp);
+    if (key == "seccomp_policy_path") cfg.security.seccomp_policy_path = value;
+    if (key == "cgroup_policy_path") cfg.security.cgroup_policy_path = value;
+    if (key == "bind_address") cfg.api.bind_address = value;
   }
   return cfg;
 }
