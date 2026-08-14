@@ -19,7 +19,7 @@ std::string status_text(int status) {
     case 500:
       return "Internal Server Error";
     default:
-      return "OK";
+      return "Unknown";
   }
 }
 
@@ -114,8 +114,10 @@ void HttpServer::serve_loop() {
       if (errno == EINTR) continue;
       continue;
     }
-    handle_connection(client_fd);
-    ::close(client_fd);
+    std::thread([this, client_fd] {
+      handle_connection(client_fd);
+      ::close(client_fd);
+    }).detach();
   }
 }
 
