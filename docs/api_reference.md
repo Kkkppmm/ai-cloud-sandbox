@@ -1,3 +1,3 @@
 # API Reference
 
-Current API skeleton includes `/health` endpoint in `RequestHandler`.
+HTTP server accepts TCP connections and routes requests to `RequestHandler`; the built-in endpoint is `/health`.

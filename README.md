@@ -16,6 +16,6 @@ ctest --test-dir build --output-on-failure
 - Multi-threaded agent manager and lifecycle control
 - Safe tool registry + permission-gated tool execution
 - Per-agent workspace + quota + atomic writes
-- API skeleton: HTTP/WebSocket/gRPC service components
+- API: socket-based HTTP server plus WebSocket/gRPC components
 - Security: API key auth and audit log
 - Monitoring: metrics and health checks

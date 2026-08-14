@@ -5,6 +5,8 @@ resources:
 security:
   enable_network: false
   enable_seccomp: true
+  seccomp_policy_path: /etc/ai-cloud-sandbox/seccomp.policy
+  cgroup_policy_path: /etc/ai-cloud-sandbox/cgroup.policy
 api:
   bind_address: 127.0.0.1
   port: 8080

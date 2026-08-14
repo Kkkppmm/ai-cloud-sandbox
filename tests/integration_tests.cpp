@@ -18,10 +18,18 @@ TEST(config_load_tolerates_bad_port) {
   std::ofstream out(path);
   out << "port: abc\n";
   out << "enable_network: true\n";
+  out << "enable_seccomp: false\n";
+  out << "bind_address: 0.0.0.0\n";
+  out << "seccomp_policy_path: /tmp/seccomp.policy\n";
+  out << "cgroup_policy_path: /tmp/cgroup.policy\n";
   out.close();
   auto cfg = ai_cloud::core::load_config(path);
   REQUIRE(cfg.api.port == 8080);
   REQUIRE(cfg.security.enable_network);
+  REQUIRE(!cfg.security.enable_seccomp);
+  REQUIRE(cfg.api.bind_address == "0.0.0.0");
+  REQUIRE(cfg.security.seccomp_policy_path == "/tmp/seccomp.policy");
+  REQUIRE(cfg.security.cgroup_policy_path == "/tmp/cgroup.policy");
 }
 
 TEST(json_escape_escapes_quotes) {

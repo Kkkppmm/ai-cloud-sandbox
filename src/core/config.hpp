@@ -13,6 +13,8 @@ struct ResourceConfig {
 struct SecurityConfig {
   bool enable_network{false};
   bool enable_seccomp{true};
+  std::string seccomp_policy_path{};
+  std::string cgroup_policy_path{};
 };
 
 struct ApiConfig {
