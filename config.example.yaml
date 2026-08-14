@@ -1,0 +1,10 @@
+resources:
+  memory_limit_mb: 256
+  cpu_shares: 256
+  workspace_quota_mb: 512
+security:
+  enable_network: false
+  enable_seccomp: true
+api:
+  bind_address: 127.0.0.1
+  port: 8080
