@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <vector>
 
 namespace ai_cloud::utils {
 
@@ -8,6 +9,6 @@ struct CommandResult {
   std::string output;
 };
 
-CommandResult run_command(const std::string& command);
+CommandResult run_command(const std::vector<std::string>& argv);
 
 } // namespace ai_cloud::utils

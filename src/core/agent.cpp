@@ -1,5 +1,6 @@
 #include "agent.hpp"
 #include <future>
+#include <thread>
 
 namespace ai_cloud::core {
 
@@ -12,11 +13,15 @@ bool Agent::run() {
     return false;
   }
   state_ = AgentState::Running;
-  auto fut = std::async(std::launch::async, work_);
+  std::packaged_task<bool()> task(work_);
+  auto fut = task.get_future();
+  std::thread worker(std::move(task));
   if (fut.wait_for(timeout_) == std::future_status::timeout) {
     state_ = AgentState::Timeout;
+    worker.detach();
     return false;
   }
+  worker.join();
   bool ok = fut.get();
   state_ = ok ? AgentState::Completed : AgentState::Failed;
   return ok;

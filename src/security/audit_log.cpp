@@ -1,4 +1,5 @@
 #include "audit_log.hpp"
+#include "utils/json_utils.hpp"
 #include <chrono>
 #include <fstream>
 
@@ -13,8 +14,9 @@ bool AuditLog::record(const std::string& user, const std::string& action, const 
   auto ts = std::chrono::duration_cast<std::chrono::seconds>(
                 std::chrono::system_clock::now().time_since_epoch())
                 .count();
-  out << "{\"ts\":" << ts << ",\"user\":\"" << user << "\",\"action\":\"" << action
-      << "\",\"result\":\"" << result << "\"}\n";
+  out << "{\"ts\":" << ts << ",\"user\":\"" << ai_cloud::utils::json_escape(user)
+      << "\",\"action\":\"" << ai_cloud::utils::json_escape(action)
+      << "\",\"result\":\"" << ai_cloud::utils::json_escape(result) << "\"}\n";
   return true;
 }
 

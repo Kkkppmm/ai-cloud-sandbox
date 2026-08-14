@@ -4,6 +4,7 @@
 
 namespace ai_cloud::utils {
 
+std::string json_escape(const std::string& input);
 std::string to_json_object(const std::map<std::string, std::string>& values);
 
 } // namespace ai_cloud::utils
