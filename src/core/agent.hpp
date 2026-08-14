@@ -2,6 +2,8 @@
 #include <atomic>
 #include <chrono>
 #include <functional>
+#include <memory>
+#include <mutex>
 #include <string>
 
 namespace ai_cloud::core {
@@ -10,7 +12,7 @@ enum class AgentState { Created, Running, Completed, Failed, Timeout, Stopped };
 
 class Agent {
  public:
-  using WorkFn = std::function<bool()>;
+  using WorkFn = std::function<bool(std::shared_ptr<std::atomic<bool>> stop_requested)>;
 
   Agent(std::string id, WorkFn work, std::chrono::milliseconds timeout);
   bool run();
@@ -24,7 +26,8 @@ class Agent {
   WorkFn work_;
   std::chrono::milliseconds timeout_;
   std::atomic<AgentState> state_{AgentState::Created};
-  std::atomic<bool> stop_requested_{false};
+  mutable std::mutex token_mu_;
+  std::shared_ptr<std::atomic<bool>> stop_token_;
 };
 
 } // namespace ai_cloud::core

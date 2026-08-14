@@ -1,4 +1,5 @@
 #include "json_utils.hpp"
+#include <iomanip>
 #include <sstream>
 
 namespace ai_cloud::utils {
@@ -23,7 +24,12 @@ std::string json_escape(const std::string& input) {
         ss << "\\t";
         break;
       default:
-        ss << c;
+        if (static_cast<unsigned char>(c) < 0x20) {
+          ss << "\\u" << std::hex << std::setw(4) << std::setfill('0')
+             << static_cast<int>(static_cast<unsigned char>(c)) << std::dec;
+        } else {
+          ss << c;
+        }
         break;
     }
   }

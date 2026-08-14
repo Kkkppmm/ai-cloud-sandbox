@@ -1,4 +1,5 @@
 #include "workspace.hpp"
+#include "filesystem_isolation.hpp"
 #include <filesystem>
 #include <fstream>
 
@@ -29,6 +30,11 @@ bool Workspace::within_quota(std::size_t extra_bytes) const {
 }
 
 bool Workspace::atomic_write(const std::string& rel_path, const std::string& content, std::string* error) {
+  FilesystemIsolation isolation;
+  if (!isolation.validate_relative_path(rel_path)) {
+    if (error) *error = "invalid relative path";
+    return false;
+  }
   if (!within_quota(content.size())) {
     if (error) *error = "quota exceeded";
     return false;

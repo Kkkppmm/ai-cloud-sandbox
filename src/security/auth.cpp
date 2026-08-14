@@ -12,7 +12,11 @@ bool AuthManager::constant_time_equal(const std::string& a, const std::string& b
     const unsigned char bc = i < b.size() ? static_cast<unsigned char>(b[i]) : 0U;
     diff |= static_cast<unsigned char>(ac ^ bc);
   }
-  diff |= static_cast<unsigned char>(a.size() ^ b.size());
+  std::size_t size_diff = a.size() ^ b.size();
+  while (size_diff != 0) {
+    diff |= static_cast<unsigned char>(size_diff & 0xFFU);
+    size_diff >>= 8U;
+  }
   return diff == 0;
 }
 
